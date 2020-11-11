@@ -78,6 +78,9 @@ type Configuration struct {
 	// Defaults to "resources"
 	ResourcesPath string `json:"resources_path"`
 
+	//This is the path that it will be written to
+	ResourcesBindPath string `json:"resources_bind_path"`
+
 	// Show Windows console
 	ShowWindowsConsole bool `json:"show_windows_console"`
 
@@ -149,6 +152,7 @@ type Bundler struct {
 	pathGoBinary         string
 	pathOutput           string
 	pathResources        string
+	pathBindResources    string
 	pathVendor           string
 	pathWorkingDirectory string
 	pathManifest         string
@@ -290,6 +294,10 @@ func New(c *Configuration, l astikit.StdLogger) (b *Bundler, err error) {
 	// Resources path
 	if b.pathResources = c.ResourcesPath; len(b.pathResources) == 0 {
 		b.pathResources = "resources"
+	}
+
+	if b.pathBindResources = c.ResourcesBindPath; len(b.pathBindResources) == 0 {
+		b.pathBindResources = b.pathResources
 	}
 
 	// Vendor path
@@ -515,6 +523,7 @@ func (b *Bundler) BindData(os, arch string) (err error) {
 
 	// Build bindata config
 	var c = bindata.NewConfig()
+	fmt.Println("PATH BIND INPUT:", b.pathBindInput)
 	c.Input = []bindata.InputConfig{{Path: b.pathBindInput, Recursive: true}}
 	c.Output = filepath.Join(b.pathBindOutput, fmt.Sprintf("bind_%s_%s.go", os, arch))
 	c.Package = b.bindPackage
@@ -618,7 +627,7 @@ func (b *Bundler) provisionVendorElectron(oS, arch string) error {
 
 func (b *Bundler) adaptResources() (err error) {
 	// Create dir
-	var o = filepath.Join(b.pathBindInput, b.pathResources)
+	var o = filepath.Join(b.pathBindInput, b.pathBindResources)
 	b.l.Debugf("Creating %s", o)
 	if err = os.MkdirAll(o, 0755); err != nil {
 		err = fmt.Errorf("mkdirall %s failed: %w", o, err)
