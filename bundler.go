@@ -686,7 +686,7 @@ func (b *Bundler) finishDarwin(environmentPath, binaryPath string) (err error) {
 	var contentsPath = filepath.Join(environmentPath, b.appName+".app", "Contents")
 	var macOSPath = filepath.Join(contentsPath, "MacOS")
 	b.l.Debugf("Creating %s", macOSPath)
-	if err = os.MkdirAll(macOSPath, 0777); err != nil {
+	if err = os.MkdirAll(macOSPath, 0755); err != nil {
 		err = fmt.Errorf("mkdirall of %s failed: %w", macOSPath, err)
 		return
 	}
@@ -716,7 +716,7 @@ func (b *Bundler) finishDarwin(environmentPath, binaryPath string) (err error) {
 
 	// Make sure the binary is executable
 	b.l.Debugf("Chmoding %s", macOSBinaryPath)
-	if err = os.Chmod(macOSBinaryPath, 0777); err != nil {
+	if err = os.Chmod(macOSBinaryPath, 0755); err != nil {
 		err = fmt.Errorf("chmoding %s failed: %w", macOSBinaryPath, err)
 		return
 	}
@@ -726,7 +726,7 @@ func (b *Bundler) finishDarwin(environmentPath, binaryPath string) (err error) {
 		// Create Resources folder
 		var resourcesPath = filepath.Join(contentsPath, "Resources")
 		b.l.Debugf("Creating %s", resourcesPath)
-		if err = os.MkdirAll(resourcesPath, 0777); err != nil {
+		if err = os.MkdirAll(resourcesPath, 0755); err != nil {
 			err = fmt.Errorf("mkdirall of %s failed: %w", resourcesPath, err)
 			return
 		}
@@ -763,13 +763,12 @@ func (b *Bundler) finishDarwin(environmentPath, binaryPath string) (err error) {
 			err = fmt.Errorf("generating Info.plist failed: %w", err)
 		}
 		return
-	}
-
-	lsuiElement := "NO"
-	if b.darwinAgentApp {
-		lsuiElement = "YES"
-	}
-	if err = ioutil.WriteFile(fp, []byte(`<?xml version="1.0" encoding="UTF-8"?>
+	} else {
+		lsuiElement := "NO"
+		if b.darwinAgentApp {
+			lsuiElement = "YES"
+		}
+		if err = ioutil.WriteFile(fp, []byte(`<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 	<dict>
@@ -788,10 +787,12 @@ func (b *Bundler) finishDarwin(environmentPath, binaryPath string) (err error) {
 		<key>CFBundlePackageType</key>
 		<string>APPL</string>
 	</dict>
-</plist>`), 0777); err != nil {
-		err = fmt.Errorf("adding Info.plist to %s failed: %w", fp, err)
-		return
+</plist>`), 0644); err != nil {
+			err = fmt.Errorf("adding Info.plist to %s failed: %w", fp, err)
+			return
+		}
 	}
+
 	return
 }
 
